@@ -76,7 +76,7 @@ def generate_clicked(*args):
 
 reload_javascript()
 
-title = f'Skyrock AI'
+title = f'Luna AI'
 
 if isinstance(args_manager.args.preset, str):
     title += ' ' + args_manager.args.preset
