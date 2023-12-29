@@ -129,7 +129,7 @@ with shared.gradio_root:
                     skip_button.click(skip_clicked, queue=False, show_progress=False)
             with gr.Row(elem_classes='advanced_check_row'):
                 input_image_checkbox = gr.Checkbox(label='Input Image', value=False, container=False,visible=False, elem_classes='min_check')
-                advanced_checkbox = gr.Checkbox(label='Advanced', value=modules.config.default_advanced_checkbox, container=False, elem_classes='min_check')
+                advanced_checkbox = gr.Checkbox(label='Advanced',visible=False, value=modules.config.default_advanced_checkbox, container=False, elem_classes='min_check')
             with gr.Row(visible=True) as image_input_panel:
                 with gr.Tabs():
                     with gr.TabItem(label='Upscale or Variation') as uov_tab:
@@ -171,7 +171,7 @@ with shared.gradio_root:
                                         ip_type.change(lambda x: flags.default_parameters[x], inputs=[ip_type], outputs=[ip_stop, ip_weight], queue=False, show_progress=False)
                                     ip_ad_cols.append(ad_col)
                         ip_advanced = gr.Checkbox(label='Advanced', value=False, container=False)
-                        gr.HTML('* \"Image Prompt\" is powered by Luna Image Genarative AI Engine. <a href="https://github.com/lllyasviel/Fooocus/discussions/557" target="_blank">\U0001F4D4 Document</a>')
+                        gr.HTML('* \"Image Prompt\" is powered by Luna Image Genarative AI Engine.')
 
                         def ip_advance_checked(x):
                             return [gr.update(visible=x)] * len(ip_ad_cols) + \
