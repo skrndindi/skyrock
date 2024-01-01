@@ -182,7 +182,15 @@ with shared.gradio_root:
                         ip_advanced.change(ip_advance_checked, inputs=ip_advanced,
                                            outputs=ip_ad_cols + ip_types + ip_stops + ip_weights,
                                            queue=False, show_progress=False)
-                    
+                    with gr.TabItem(label='Inpaint or Outpaint(unstable)',visible=False) as inpaint_tab:
+                        inpaint_input_image = grh.Image(label='Drag above image to here', source='upload', type='numpy', tool='sketch', height=500, brush_color="#FFFFFF", elem_id='inpaint_canvas')
+                        with gr.Row():
+                            inpaint_additional_prompt = gr.Textbox(placeholder="Describe what you want to inpaint.", elem_id='inpaint_additional_prompt', label='Inpaint Additional Prompt', visible=False)
+                            outpaint_selections = gr.CheckboxGroup(choices=['Left', 'Right', 'Top', 'Bottom'], value=[], label='Outpaint Direction')
+                            inpaint_mode = gr.Dropdown(choices=modules.flags.inpaint_options, value=modules.flags.inpaint_option_default, label='Method')
+                        example_inpaint_prompts = gr.Dataset(samples=modules.config.example_inpaint_prompts, label='Additional Prompt Quick List', components=[inpaint_additional_prompt], visible=False)
+                        gr.HTML('* Powered by Luna Inpaint Engine ')
+                        example_inpaint_prompts.click(lambda x: x[0], inputs=example_inpaint_prompts, outputs=inpaint_additional_prompt, show_progress=False, queue=False)
                     with gr.TabItem(label='Describe') as desc_tab:
                         with gr.Row():
                             with gr.Column():
@@ -203,6 +211,7 @@ with shared.gradio_root:
 
             current_tab = gr.Textbox(value='uov', visible=False)
             uov_tab.select(lambda: 'uov', outputs=current_tab, queue=False, _js=down_js, show_progress=False)
+            inpaint_tab.select(lambda: 'inpaint', outputs=current_tab, queue=False, _js=down_js, show_progress=False)
             ip_tab.select(lambda: 'ip', outputs=current_tab, queue=False, _js=down_js, show_progress=False)
             desc_tab.select(lambda: 'desc', outputs=current_tab, queue=False, _js=down_js, show_progress=False)
 
@@ -457,7 +466,50 @@ with shared.gradio_root:
                                  queue=False, show_progress=False) \
             .then(fn=lambda: None, _js='refresh_grid_delayed', queue=False, show_progress=False)
 
-    
+        def inpaint_mode_change(mode):
+            assert mode in modules.flags.inpaint_options
+
+            # inpaint_additional_prompt, outpaint_selections, example_inpaint_prompts,
+            # inpaint_disable_initial_latent, inpaint_engine,
+            # inpaint_strength, inpaint_respective_field
+
+            if mode == modules.flags.inpaint_option_detail:
+                return [
+                    gr.update(visible=True), gr.update(visible=False, value=[]),
+                    gr.Dataset.update(visible=True, samples=modules.config.example_inpaint_prompts),
+                    False, 'None', 0.5, 0.0
+                ]
+
+            if mode == modules.flags.inpaint_option_modify:
+                return [
+                    gr.update(visible=True), gr.update(visible=False, value=[]),
+                    gr.Dataset.update(visible=False, samples=modules.config.example_inpaint_prompts),
+                    True, modules.config.default_inpaint_engine_version, 1.0, 0.0
+                ]
+
+            return [
+                gr.update(visible=False, value=''), gr.update(visible=True),
+                gr.Dataset.update(visible=False, samples=modules.config.example_inpaint_prompts),
+                False, modules.config.default_inpaint_engine_version, 1.0, 0.618
+            ]
+
+        inpaint_mode.input(inpaint_mode_change, inputs=inpaint_mode, outputs=[
+            inpaint_additional_prompt, outpaint_selections, example_inpaint_prompts,
+            inpaint_disable_initial_latent, inpaint_engine,
+            inpaint_strength, inpaint_respective_field
+        ], show_progress=False, queue=False)
+
+        ctrls = [
+            prompt, negative_prompt, style_selections,
+            performance_selection, aspect_ratios_selection, image_number, image_seed, sharpness, guidance_scale
+        ]
+
+        ctrls += [base_model, refiner_model, refiner_switch] + lora_ctrls
+        ctrls += [input_image_checkbox, current_tab]
+        ctrls += [uov_method, uov_input_image]
+        ctrls += [outpaint_selections, inpaint_input_image, inpaint_additional_prompt]
+        ctrls += ip_ctrls
+
         generate_button.click(lambda: (gr.update(visible=True, interactive=True), gr.update(visible=True, interactive=True), gr.update(visible=False), []), outputs=[stop_button, skip_button, generate_button, gallery]) \
             .then(fn=refresh_seed, inputs=[seed_random, image_seed], outputs=image_seed) \
             .then(advanced_parameters.set_all_advanced_parameters, inputs=adps) \
