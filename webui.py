@@ -388,26 +388,6 @@ with shared.gradio_root:
                             canny_high_threshold = gr.Slider(label='Canny High Threshold', minimum=1, maximum=255,
                                                              step=1, value=128)
 
-                    with gr.Tab(label='Inpaint'):
-                        debugging_inpaint_preprocessor = gr.Checkbox(label='Debug Inpaint Preprocessing', value=False)
-                        inpaint_disable_initial_latent = gr.Checkbox(label='Disable initial latent in inpaint', value=False)
-                        inpaint_engine = gr.Dropdown(label='Inpaint Engine',
-                                                     value=modules.config.default_inpaint_engine_version,
-                                                     choices=flags.inpaint_engine_versions,
-                                                     info='Version of Fooocus inpaint model')
-                        inpaint_strength = gr.Slider(label='Inpaint Denoising Strength',
-                                                     minimum=0.0, maximum=1.0, step=0.001, value=1.0,
-                                                     info='Same as the denoising strength in A1111 inpaint. '
-                                                          'Only used in inpaint, not used in outpaint. '
-                                                          '(Outpaint always use 1.0)')
-                        inpaint_respective_field = gr.Slider(label='Inpaint Respective Field',
-                                                             minimum=0.0, maximum=1.0, step=0.001, value=0.618,
-                                                             info='The area to inpaint. '
-                                                                  'Value 0 is same as "Only Masked" in A1111. '
-                                                                  'Value 1 is same as "Whole Image" in A1111. '
-                                                                  'Only used in inpaint, not used in outpaint. '
-                                                                  '(Outpaint always use 1.0)')
-                        inpaint_ctrls = [debugging_inpaint_preprocessor, inpaint_disable_initial_latent, inpaint_engine, inpaint_strength, inpaint_respective_field]
 
                     with gr.Tab(label='FreeU'):
                         freeu_enabled = gr.Checkbox(label='Enabled', value=False)
@@ -457,62 +437,7 @@ with shared.gradio_root:
                                  queue=False, show_progress=False) \
             .then(fn=lambda: None, _js='refresh_grid_delayed', queue=False, show_progress=False)
 
-        def inpaint_mode_change(mode):
-            assert mode in modules.flags.inpaint_options
-
-            # inpaint_additional_prompt, outpaint_selections, example_inpaint_prompts,
-            # inpaint_disable_initial_latent, inpaint_engine,
-            # inpaint_strength, inpaint_respective_field
-
-            if mode == modules.flags.inpaint_option_detail:
-                return [
-                    gr.update(visible=True), gr.update(visible=False, value=[]),
-                    gr.Dataset.update(visible=True, samples=modules.config.example_inpaint_prompts),
-                    False, 'None', 0.5, 0.0
-                ]
-
-            if mode == modules.flags.inpaint_option_modify:
-                return [
-                    gr.update(visible=True), gr.update(visible=False, value=[]),
-                    gr.Dataset.update(visible=False, samples=modules.config.example_inpaint_prompts),
-                    True, modules.config.default_inpaint_engine_version, 1.0, 0.0
-                ]
-
-            return [
-                gr.update(visible=False, value=''), gr.update(visible=True),
-                gr.Dataset.update(visible=False, samples=modules.config.example_inpaint_prompts),
-                False, modules.config.default_inpaint_engine_version, 1.0, 0.618
-            ]
-
-        inpaint_mode.input(inpaint_mode_change, inputs=inpaint_mode, outputs=[
-            inpaint_additional_prompt, outpaint_selections, example_inpaint_prompts,
-            inpaint_disable_initial_latent, inpaint_engine,
-            inpaint_strength, inpaint_respective_field
-        ], show_progress=False, queue=False)
-
-        ctrls = [
-            prompt, negative_prompt, style_selections,
-            performance_selection, aspect_ratios_selection, image_number, image_seed, sharpness, guidance_scale
-        ]
-
-        ctrls += [base_model, refiner_model, refiner_switch] + lora_ctrls
-        ctrls += [input_image_checkbox, current_tab]
-        ctrls += [uov_method, uov_input_image]
-        ctrls += [outpaint_selections, inpaint_input_image, inpaint_additional_prompt]
-        ctrls += ip_ctrls
-
-        generate_button.click(lambda: (gr.update(visible=True, interactive=True), gr.update(visible=True, interactive=True), gr.update(visible=False), []), outputs=[stop_button, skip_button, generate_button, gallery]) \
-            .then(fn=refresh_seed, inputs=[seed_random, image_seed], outputs=image_seed) \
-            .then(advanced_parameters.set_all_advanced_parameters, inputs=adps) \
-            .then(fn=generate_clicked, inputs=ctrls, outputs=[progress_html, progress_window, progress_gallery, gallery]) \
-            .then(lambda: (gr.update(visible=True), gr.update(visible=False), gr.update(visible=False)), outputs=[generate_button, stop_button, skip_button]) \
-            .then(fn=lambda: None, _js='playNotification').then(fn=lambda: None, _js='refresh_grid_delayed')
-
-        for notification_file in ['notification.ogg', 'notification.mp3']:
-            if os.path.exists(notification_file):
-                gr.Audio(interactive=False, value=notification_file, elem_id='audio_notification', visible=False)
-                break
-
+        
         def trigger_describe(mode, img, visible=True):
             if mode == flags.desc_type_photo:
                 from extras.interrogate import default_interrogator as default_interrogator_photo
