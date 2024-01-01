@@ -466,50 +466,7 @@ with shared.gradio_root:
                                  queue=False, show_progress=False) \
             .then(fn=lambda: None, _js='refresh_grid_delayed', queue=False, show_progress=False)
 
-        def inpaint_mode_change(mode):
-            assert mode in modules.flags.inpaint_options
-
-            # inpaint_additional_prompt, outpaint_selections, example_inpaint_prompts,
-            # inpaint_disable_initial_latent, inpaint_engine,
-            # inpaint_strength, inpaint_respective_field
-
-            if mode == modules.flags.inpaint_option_detail:
-                return [
-                    gr.update(visible=True), gr.update(visible=False, value=[]),
-                    gr.Dataset.update(visible=True, samples=modules.config.example_inpaint_prompts),
-                    False, 'None', 0.5, 0.0
-                ]
-
-            if mode == modules.flags.inpaint_option_modify:
-                return [
-                    gr.update(visible=True), gr.update(visible=False, value=[]),
-                    gr.Dataset.update(visible=False, samples=modules.config.example_inpaint_prompts),
-                    True, modules.config.default_inpaint_engine_version, 1.0, 0.0
-                ]
-
-            return [
-                gr.update(visible=False, value=''), gr.update(visible=True),
-                gr.Dataset.update(visible=False, samples=modules.config.example_inpaint_prompts),
-                False, modules.config.default_inpaint_engine_version, 1.0, 0.618
-            ]
-
-        inpaint_mode.input(inpaint_mode_change, inputs=inpaint_mode, outputs=[
-            inpaint_additional_prompt, outpaint_selections, example_inpaint_prompts,
-            inpaint_disable_initial_latent, inpaint_engine,
-            inpaint_strength, inpaint_respective_field
-        ], show_progress=False, queue=False)
-
-        ctrls = [
-            prompt, negative_prompt, style_selections,
-            performance_selection, aspect_ratios_selection, image_number, image_seed, sharpness, guidance_scale
-        ]
-
-        ctrls += [base_model, refiner_model, refiner_switch] + lora_ctrls
-        ctrls += [input_image_checkbox, current_tab]
-        ctrls += [uov_method, uov_input_image]
-        ctrls += [outpaint_selections, inpaint_input_image, inpaint_additional_prompt]
-        ctrls += ip_ctrls
-
+    
         generate_button.click(lambda: (gr.update(visible=True, interactive=True), gr.update(visible=True, interactive=True), gr.update(visible=False), []), outputs=[stop_button, skip_button, generate_button, gallery]) \
             .then(fn=refresh_seed, inputs=[seed_random, image_seed], outputs=image_seed) \
             .then(advanced_parameters.set_all_advanced_parameters, inputs=adps) \
