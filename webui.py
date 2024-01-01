@@ -404,7 +404,7 @@ with shared.gradio_root:
                         debugging_cn_preprocessor, skipping_cn_preprocessor, controlnet_softness,
                         canny_low_threshold, canny_high_threshold, refiner_swap_method]
                 adps += freeu_ctrls
-                adps += inpaint_ctrls
+            
 
                 def dev_mode_checked(r):
                     return gr.update(visible=r)
